@@ -499,7 +499,24 @@ mountAdmin(app);
 app.get(
   "/api/admin/overview",
   wrap(async (req, res) => {
-    const [users, activePlans, deposits, withdrawals, balances, byDay] =
+    const pakistanParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Karachi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const part = (type) => pakistanParts.find((item) => item.type === type)?.value;
+    const todayStart = new Date(
+      Date.UTC(Number(part("year")), Number(part("month")) - 1, Number(part("day"))) -
+        5 * 60 * 60 * 1000,
+    );
+    const sevenDaysAgo = new Date(todayStart.getTime() - 6 * 86400000);
+    const sumAmounts = (model, match) =>
+      model.aggregate([
+        { $match: match },
+        { $group: { _id: null, amount: { $sum: "$amount" } } },
+      ]);
+    const [users, activePlans, deposits, withdrawals, balances, byDay, todayDeposits, todayWithdrawals, todayInvestment, todayUsers, totalDeposits, totalWithdrawals, totalEarnings, totalCommissions, registrations] =
       await Promise.all([
         User.countDocuments({ role: "member" }),
         Purchase.countDocuments({ status: "active" }),
@@ -554,13 +571,57 @@ app.get(
           },
           { $sort: { _id: 1 } },
         ]),
+        sumAmounts(Deposit, { status: "approved", createdAt: { $gte: todayStart } }),
+        sumAmounts(Withdrawal, { status: "paid", createdAt: { $gte: todayStart } }),
+        sumAmounts(Purchase, { createdAt: { $gte: todayStart } }),
+        User.countDocuments({ role: "member", createdAt: { $gte: todayStart } }),
+        sumAmounts(Deposit, { status: "approved" }),
+        sumAmounts(Withdrawal, { status: "paid" }),
+        sumAmounts(Earning, {}),
+        Transaction.aggregate([
+          { $match: { kind: "commission" } },
+          { $group: { _id: null, amount: { $sum: "$amount" } } },
+        ]),
+        User.aggregate([
+          { $match: { role: "member", createdAt: { $gte: sevenDaysAgo } } },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$createdAt",
+                  timezone: "Asia/Karachi",
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]),
       ]);
+    const amount = (rows) => (rows[0]?.amount || 0) / 100;
     res.json({
       users,
       activePlans,
       pendingDeposits: deposits,
       pendingWithdrawals: withdrawals,
       balances: balances[0] || { deposits: 0, withdrawable: 0 },
+      today: {
+        deposits: amount(todayDeposits),
+        withdrawals: amount(todayWithdrawals),
+        investment: amount(todayInvestment),
+        users: todayUsers,
+      },
+      totals: {
+        deposits: amount(totalDeposits),
+        withdrawals: amount(totalWithdrawals),
+        earnings: amount(totalEarnings),
+        commissions: amount(totalCommissions),
+      },
+      registrations: registrations.map((entry) => ({
+        date: entry._id,
+        count: entry.count,
+      })),
       chart: byDay.map((d) => ({
         date: d._id,
         deposits: d.deposits / 100,
