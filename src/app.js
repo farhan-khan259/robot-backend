@@ -50,6 +50,7 @@ app.use(
           "'self'",
           "blob:",
           "data:",
+          "https://www.google.com",
           "https://images.seeklogo.com",
           "https://www.hbl.com",
           "https://companieslogo.com",
