@@ -73,7 +73,7 @@ test("exact 12-plan catalog and integer-paisa reconciliation", async () => {
     assert.ok(Math.abs(p.total - p.daily * 45) <= 15);
   }
   const settings = await Setting.findOne();
-  assert.equal(settings.accountNumber, "03340490934");
+  assert.equal(settings.accountNumber, "03248008331");
 });
 test("registration, login, validation, admin isolation and blocked sessions", async () => {
   let res = await request.post("/api/auth/register").send({
@@ -450,10 +450,10 @@ test("administrator APIs enforce review transitions, settings and immutable plan
     .patch("/api/admin/settings")
     .auth(adminToken, { type: "bearer" })
     .send({
-      accountName: "Muhammad Farhan",
-      accountNumber: "03340490934",
+      accountName: "Kashif Ali",
+      accountNumber: "03248008331",
       supportEmail: "",
-      supportPhone: "03340490934",
+      supportPhone: "03248008331",
     });
   assert.equal(res.status, 200);
   const p = await Plan.findOne({ code: "RN01" });

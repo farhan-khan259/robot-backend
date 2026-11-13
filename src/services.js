@@ -59,12 +59,24 @@ export async function initialize() {
     {
       $setOnInsert: {
         key: "payment",
-        accountName: "Muhammad Farhan",
-        accountNumber: "03340490934",
-        supportPhone: "03340490934",
+        accountName: "Kashif Ali",
+        accountNumber: "03248008331",
+        supportPhone: "03248008331",
       },
     },
     { upsert: true },
+  );
+  await Setting.updateOne(
+    { key: "payment", accountName: "Muhammad Farhan" },
+    { $set: { accountName: "Kashif Ali" } },
+  );
+  await Setting.updateOne(
+    { key: "payment", accountNumber: "03340490934" },
+    { $set: { accountNumber: "03248008331" } },
+  );
+  await Setting.updateOne(
+    { key: "payment", supportPhone: "03340490934" },
+    { $set: { supportPhone: "03248008331" } },
   );
 }
 export async function ledger(

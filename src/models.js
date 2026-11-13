@@ -154,10 +154,10 @@ export const Setting = model(
   new Schema(
     {
       key: { type: String, unique: true, default: "payment" },
-      accountName: { type: String, default: "Muhammad Farhan" },
-      accountNumber: { type: String, default: "03340490934" },
+      accountName: { type: String, default: "Kashif Ali" },
+      accountNumber: { type: String, default: "03248008331" },
       supportEmail: { type: String, default: "" },
-      supportPhone: { type: String, default: "03340490934" },
+      supportPhone: { type: String, default: "03248008331" },
     },
     options,
   ),
