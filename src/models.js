@@ -88,6 +88,7 @@ const txSchema = new Schema(
         "purchase",
         "earning",
         "commission",
+        "adjustment",
         "withdrawal",
         "refund",
       ],

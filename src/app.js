@@ -672,6 +672,65 @@ app.patch(
     res.json(u);
   }),
 );
+app.post(
+  "/api/admin/users/:id/login",
+  wrap(async (req, res) => {
+    const user = await User.findOne({
+      _id: parse(id, req.params.id),
+      role: "member",
+      blocked: false,
+    });
+    ensure(user, "Active member not found", 404);
+    res.json({ token: sign(user), user: publicUser(user) });
+  }),
+);
+app.post(
+  "/api/admin/users/:id/balance",
+  wrap(async (req, res) => {
+    const d = parse(
+      z.object({
+        wallet: z.enum(["deposit", "withdrawable"]),
+        direction: z.enum(["add", "remove"]),
+        amount,
+      }),
+      req.body,
+    );
+    const user = await User.findOne({ _id: parse(id, req.params.id), role: "member" });
+    ensure(user, "Member not found", 404);
+    const field = d.wallet === "deposit" ? "depositBalance" : "withdrawableBalance";
+    ensure(d.direction === "add" || user[field] >= d.amount, "Insufficient wallet balance");
+    const delta = d.direction === "add" ? d.amount : -d.amount;
+    user[field] += delta;
+    await user.save();
+    await Transaction.create({
+      user: user._id,
+      kind: "adjustment",
+      direction: d.direction === "add" ? "in" : "out",
+      wallet: d.wallet,
+      amount: d.amount,
+      reference: `ADMIN-${req.user._id}-${Date.now()}`,
+      note: `Administrator ${d.direction}ed wallet balance`,
+    });
+    res.json(publicUser(user));
+  }),
+);
+app.delete(
+  "/api/admin/users/:id",
+  wrap(async (req, res) => {
+    ensure(String(req.user._id) !== req.params.id, "You cannot delete your own account");
+    const user = await User.findOne({ _id: parse(id, req.params.id), role: "member" });
+    ensure(user, "Member not found", 404);
+    await Promise.all([
+      User.deleteOne({ _id: user._id }),
+      Purchase.deleteMany({ user: user._id }),
+      Earning.deleteMany({ user: user._id }),
+      Transaction.deleteMany({ user: user._id }),
+      Deposit.deleteMany({ user: user._id }),
+      Withdrawal.deleteMany({ user: user._id }),
+    ]);
+    res.status(204).end();
+  }),
+);
 app.get(
   "/api/admin/plans",
   wrap(async (req, res) => res.json(await Plan.find().sort({ price: 1 }))),
