@@ -46,7 +46,14 @@ app.use(
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         fontSrc: ["'self'"],
-        imgSrc: ["'self'", "blob:", "data:"],
+        imgSrc: [
+          "'self'",
+          "blob:",
+          "data:",
+          "https://images.seeklogo.com",
+          "https://www.hbl.com",
+          "https://companieslogo.com",
+        ],
         connectSrc: ["'self'"],
         upgradeInsecureRequests:
           process.env.NODE_ENV === "production" ? [] : null,
