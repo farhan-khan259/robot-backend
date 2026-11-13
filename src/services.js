@@ -28,7 +28,24 @@ export async function initialize() {
     "MongoDB replica set is required for atomic financial operations",
     500,
   );
+  await User.createCollection().catch((error) => {
+    if (error.codeName !== "NamespaceExists") throw error;
+  });
+  await User.updateMany({ phone: "" }, { $unset: { phone: 1 } });
+  const indexes = await User.collection.listIndexes().toArray();
+  for (const index of indexes) {
+    if (
+      index.name !== "_id_" &&
+      (index.key?.email === 1 || index.key?.phone === 1)
+    ) {
+      await User.collection.dropIndex(index.name);
+    }
+  }
   await Promise.all(models.map((m) => m.init()));
+  await User.collection.createIndex(
+    { phone: 1 },
+    { unique: true, sparse: true, name: "phone_1" },
+  );
   for (const p of PLAN_DATA) {
     const { name, ...initialPlan } = p;
     await Plan.updateOne(

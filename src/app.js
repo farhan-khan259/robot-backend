@@ -139,10 +139,34 @@ const sign = (u) =>
     issuer: "robotnetwork",
     audience: "robotnetwork-web",
   });
-const credentials = z.object({
-  email: z.string().trim().toLowerCase().email().max(160),
-  password: z.string().min(10).max(128),
-});
+const email = z.string().trim().toLowerCase().email().max(160);
+const phone = z
+  .string()
+  .trim()
+  .regex(/^\+?[0-9 ()-]{7,24}$/, "Enter a valid phone number")
+  .transform((value) => value.replace(/[ ()-]/g, ""));
+const password = z.string().min(10).max(128);
+const credentialFields = {
+  email: email.optional(),
+  phone: phone.optional(),
+  password,
+};
+const credentials = z
+  .object(credentialFields)
+  .refine((value) => value.email || value.phone, {
+    message: "Email or phone number is required",
+    path: ["phone"],
+  });
+const registrationCredentials = z
+  .object({
+    ...credentialFields,
+    name: text,
+    referralCode: z.string().trim().max(24).optional(),
+  })
+  .refine((value) => value.email || value.phone, {
+    message: "Email or phone number is required",
+    path: ["phone"],
+  });
 const authLimiter = rateLimit({
   windowMs: 900000,
   limit: 30,
@@ -171,10 +195,7 @@ app.post(
   authLimiter,
   wrap(async (req, res) => {
     const d = parse(
-      credentials.extend({
-        name: text,
-        referralCode: z.string().trim().max(24).optional(),
-      }),
+      registrationCredentials,
       req.body,
     );
     const parent = d.referralCode
@@ -184,6 +205,7 @@ app.post(
     const u = await User.create({
       name: d.name,
       email: d.email,
+      phone: d.phone,
       password: await bcrypt.hash(d.password, 12),
       referralCode: randomBytes(6).toString("hex").toUpperCase(),
       referredBy: parent?._id,
@@ -196,13 +218,15 @@ app.post(
   authLimiter,
   wrap(async (req, res) => {
     const d = parse(credentials, req.body);
-    const u = await User.findOne({ email: d.email }).select("+password");
+    const u = await User.findOne(
+      d.phone ? { phone: d.phone } : { email: d.email },
+    ).select("+password");
     const valid = await bcrypt.compare(
       d.password,
       u?.password ||
         "$2b$12$C6UzMDM.H6dfI/f/IKcEe.7F2FG4.5FfWi8JpMhi9cM.z0t0yF/2.",
     );
-    ensure(u && valid && !u.blocked, "Invalid email or password", 401);
+    ensure(u && valid && !u.blocked, "Invalid email, phone, or password", 401);
     res.json({ token: sign(u), user: publicUser(u) });
   }),
 );

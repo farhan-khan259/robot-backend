@@ -15,7 +15,7 @@ const options = { timestamps: true, strict: "throw" };
 const userSchema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, unique: true, sparse: true },
     password: { type: String, required: true, select: false },
     role: { type: String, enum: ["member", "admin"], default: "member" },
     referralCode: { type: String, required: true, unique: true },
@@ -24,7 +24,7 @@ const userSchema = new Schema(
     withdrawableBalance: { ...money, default: 0 },
     blocked: { type: Boolean, default: false },
     tokenVersion: { type: Number, default: 0 },
-    phone: { type: String, default: "" },
+    phone: { type: String },
     notificationsReadAt: { type: Date, default: null },
   },
   options,
