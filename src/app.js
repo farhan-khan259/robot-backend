@@ -599,7 +599,9 @@ app.get(
           { $sort: { _id: 1 } },
         ]),
       ]);
-    const amount = (rows) => (rows[0]?.amount || 0) / 100;
+    // API money values remain in paisa/cents. The client currency formatter
+    // performs the single conversion to PKR for display.
+    const amount = (rows) => rows[0]?.amount || 0;
     res.json({
       users,
       activePlans,
