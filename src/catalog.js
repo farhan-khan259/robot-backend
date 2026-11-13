@@ -9,8 +9,8 @@ const PLAN_NAMES = [
   "Robo Ultra",
   "Robo Supreme",
   "Robo Infinity",
-  "Robot 11",
-  "Robot 12",
+  "Robo Legend",
+  "Robo Ultimate",
 ];
 export const PLAN_DATA = [
   [500, 83.33, 3750],
