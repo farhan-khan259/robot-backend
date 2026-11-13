@@ -125,6 +125,9 @@ const publicUser = (u) => ({
   name: u.name,
   email: u.email,
   phone: u.phone,
+  avatar: u.avatar
+    ? `/api/me/avatar?v=${encodeURIComponent(u.avatar)}`
+    : null,
   role: u.role,
   referralCode: u.referralCode,
   depositBalance: u.depositBalance,
@@ -407,6 +410,44 @@ const upload = multer({
   fileFilter: (req, file, cb) =>
     cb(null, ["image/png", "image/jpeg", "image/webp"].includes(file.mimetype)),
 });
+const validImage = (buffer, mime) =>
+  mime === "image/png"
+    ? buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+    : mime === "image/jpeg"
+      ? buffer[0] === 255 && buffer[1] === 216 && buffer[2] === 255
+      : buffer.subarray(0, 4).toString() === "RIFF" &&
+        buffer.subarray(8, 12).toString() === "WEBP";
+app.post(
+  "/api/me/avatar",
+  upload.single("avatar"),
+  wrap(async (req, res) => {
+    try {
+      ensure(req.file, "A PNG, JPEG or WebP profile photo up to 5MB is required");
+      const buffer = await readFile(req.file.path);
+      ensure(
+        validImage(buffer, req.file.mimetype),
+        "Profile photo format does not match its contents",
+      );
+      const previous = req.user.avatar;
+      req.user.avatar = req.file.filename;
+      req.user.avatarMime = req.file.mimetype;
+      await req.user.save();
+      if (previous) await unlink(path.join(uploadDir, previous)).catch(() => {});
+      res.json(publicUser(req.user));
+    } catch (e) {
+      if (req.file) await unlink(req.file.path).catch(() => {});
+      throw e;
+    }
+  }),
+);
+app.get(
+  "/api/me/avatar",
+  wrap(async (req, res) => {
+    ensure(req.user.avatar, "Profile photo not found", 404);
+    res.set("Cache-Control", "no-store");
+    res.type(req.user.avatarMime).sendFile(path.join(uploadDir, req.user.avatar));
+  }),
+);
 app.post(
   "/api/deposits",
   upload.single("screenshot"),

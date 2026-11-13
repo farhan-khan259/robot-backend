@@ -381,6 +381,33 @@ test("upload byte checks, private proof access, duplicate TID, pagination and pr
     ).status,
     200,
   );
+  const avatarResponse = await request
+    .post("/api/me/avatar")
+    .auth(token, { type: "bearer" })
+    .attach("avatar", tiny, {
+      filename: "avatar.png",
+      contentType: "image/png",
+    });
+  assert.equal(avatarResponse.status, 200);
+  assert.match(avatarResponse.body.avatar, /^\/api\/me\/avatar\?v=/);
+  const loggedOut = await request.post("/api/auth/logout").auth(token, {
+    type: "bearer",
+  });
+  assert.equal(loggedOut.status, 200);
+  const relogin = await request.post("/api/auth/login").send({
+    email: "new@example.test",
+    password: "a-strong-password",
+  });
+  assert.equal(relogin.status, 200);
+  assert.equal(relogin.body.user.avatar, avatarResponse.body.avatar);
+  assert.equal(
+    (
+      await request
+        .get("/api/me/avatar")
+        .auth(relogin.body.token, { type: "bearer" })
+    ).status,
+    200,
+  );
   await request.post("/api/auth/logout").auth(token, { type: "bearer" });
   assert.equal(
     (await request.get("/api/me").auth(token, { type: "bearer" })).status,

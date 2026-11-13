@@ -244,7 +244,7 @@ export async function requestWithdrawal(userId, data, requestKey) {
       { $inc: { withdrawableBalance: -data.amount } },
       { new: true, session },
     );
-    ensure(u, "Insufficient withdrawable balance");
+    ensure(u, "Insufficient withdrawable wallet funds");
     const [w] = await Withdrawal.create(
       [{ user: userId, ...data, requestKey }],
       { session },

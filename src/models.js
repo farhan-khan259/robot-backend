@@ -25,6 +25,8 @@ const userSchema = new Schema(
     blocked: { type: Boolean, default: false },
     tokenVersion: { type: Number, default: 0 },
     phone: { type: String },
+    avatar: { type: String, default: "" },
+    avatarMime: { type: String, default: "" },
     notificationsReadAt: { type: Date, default: null },
   },
   options,
