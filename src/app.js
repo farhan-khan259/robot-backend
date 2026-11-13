@@ -455,7 +455,9 @@ app.post(
     try {
       const d = parse(
         z.object({
-          amount: z.coerce.number().pipe(amount),
+          amount: z.coerce.number().pipe(
+            amount.refine((n) => n >= 50000, "Minimum deposit is Rs 500"),
+          ),
           tid: z
             .string()
             .trim()
@@ -524,8 +526,8 @@ app.post(
     const d = parse(
       z.object({
         amount: amount.refine(
-          (n) => n >= 10000,
-          "Minimum withdrawal is Rs 100",
+          (n) => n >= 20000,
+          "Minimum withdrawal is Rs 200",
         ),
         institution: z.enum(INSTITUTIONS.map((i) => i.id)),
         customInstitution: z.string().trim().max(160).default(""),

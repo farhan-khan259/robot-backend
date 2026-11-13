@@ -55,7 +55,7 @@ export const DEFAULT_CONTENT = {
       category: "Payments",
       question: "When can I request a withdrawal?",
       answer:
-        "Requests are available 24/7, require an active plan, and have a minimum amount of Rs 100.",
+        "Requests are available 24/7, require an active plan, and have a minimum amount of Rs 200.",
     },
   ],
 };

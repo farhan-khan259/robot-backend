@@ -205,7 +205,7 @@ test("24-hour boundaries, multi-worker cron, full catch-up and exact total", asy
 });
 test("withdrawals require active plan, reserve only earnings, refund exactly once", async () => {
   const data = {
-    amount: 10000,
+    amount: 20000,
     institution: "easypaisa",
     accountName: "Member",
     accountNumber: "03001234567",
@@ -225,7 +225,7 @@ test("withdrawals require active plan, reserve only earnings, refund exactly onc
   const w = await requestWithdrawal(user._id, data, key);
   await requestWithdrawal(user._id, data, key);
   let now = await User.findById(user._id);
-  assert.equal(now.withdrawableBalance, before.withdrawableBalance - 10000);
+  assert.equal(now.withdrawableBalance, before.withdrawableBalance - 20000);
   assert.equal(now.depositBalance, before.depositBalance);
   await reviewWithdrawal(
     w._id,
@@ -256,7 +256,7 @@ test("withdrawals require active plan, reserve only earnings, refund exactly onc
   );
   assert.equal(
     (await User.findById(user._id)).withdrawableBalance,
-    before.withdrawableBalance - 10000,
+    before.withdrawableBalance - 20000,
   );
 });
 test("API rejects low withdrawals and missing idempotency keys", async () => {
@@ -303,6 +303,16 @@ test("upload byte checks, private proof access, duplicate TID, pagination and pr
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aC2kAAAAASUVORK5CYII=",
     "base64",
   );
+  const lowDeposit = await request
+    .post("/api/deposits")
+    .auth(token, { type: "bearer" })
+    .field("amount", "499")
+    .field("tid", "LOW-DEPOSIT")
+    .attach("screenshot", tiny, {
+      filename: "proof.png",
+      contentType: "image/png",
+    });
+  assert.equal(lowDeposit.status, 400);
   let res = await request
     .post("/api/deposits")
     .auth(token, { type: "bearer" })
