@@ -1,0 +1,15 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and runtime data
+node_modules/
+uploads/*
+!uploads/.gitkeep
+
+# Logs and test output
+*.log
+coverage/
+test-results/
+.DS_Store
