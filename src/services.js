@@ -29,12 +29,14 @@ export async function initialize() {
     500,
   );
   await Promise.all(models.map((m) => m.init()));
-  for (const p of PLAN_DATA)
+  for (const p of PLAN_DATA) {
+    const { name, ...initialPlan } = p;
     await Plan.updateOne(
       { code: p.code },
-      { $setOnInsert: p },
+      { $set: { name }, $setOnInsert: initialPlan },
       { upsert: true },
     );
+  }
   await Setting.updateOne(
     { key: "payment" },
     {

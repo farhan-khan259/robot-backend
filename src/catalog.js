@@ -1,3 +1,17 @@
+const PLAN_NAMES = [
+  "Robo Starter",
+  "Robo Spark",
+  "Robo Swift",
+  "Robo Boost",
+  "Robo Prime",
+  "Robo Titan",
+  "Robo Elite",
+  "Robo Ultra",
+  "Robo Supreme",
+  "Robo Infinity",
+  "Robot 11",
+  "Robot 12",
+];
 export const PLAN_DATA = [
   [500, 83.33, 3750],
   [800, 133.33, 6000],
@@ -13,7 +27,7 @@ export const PLAN_DATA = [
   [100000, 16666.67, 750000],
 ].map(([price, daily, total], i) => ({
   code: `RN${String(i + 1).padStart(2, "0")}`,
-  name: `Robot ${String(i + 1).padStart(2, "0")}`,
+  name: PLAN_NAMES[i],
   price: Math.round(price * 100),
   daily: Math.round(daily * 100),
   total: Math.round(total * 100),
